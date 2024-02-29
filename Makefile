@@ -49,6 +49,8 @@ else
 
 PWD := $(shell pwd)
 
+KERNELHEADERS := /lib/modules/$(shell uname -r)/build
+
 MOD_DIR := kernel/natinst/u3v
 MOD_PATH := /lib/modules/$(shell uname -r)/$(MOD_DIR)
 

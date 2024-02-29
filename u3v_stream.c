@@ -221,14 +221,14 @@ int u3v_create_stream(struct u3v_device *u3v, struct usb_interface *intf,
 	dev = u3v->device;
 
 	if (u3v->stream_info.bulk_in == NULL) {
-		dev_err(u3v->device,
+		dev_info(u3v->device,
 			"%s: Did not detect bulk in endpoint in the stream interface.\n",
 			__func__);
 		return U3V_ERR_NO_STREAM_INTERFACE;
 	}
 
 	if (u3v->u3v_info->sirm_addr == 0) {
-		dev_err(u3v->device,
+		dev_info(u3v->device,
 			"%s: the SIRM address is 0 - streaming is not supported\n",
 			__func__);
 		return U3V_ERR_NO_STREAM_INTERFACE;
@@ -312,14 +312,14 @@ static int calculate_urb_sizes(struct u3v_stream *stream,
 	int ret = 0;
 
 	if (host_image_buffer_size == 0) {
-		dev_err(dev,
+		dev_info(dev,
 			"%s: Error, image buffer size must be greater than 0\n",
 			__func__);
 		return -EINVAL;
 	}
 
 	if (segment_size == 0 || segment_size > host_image_buffer_size) {
-		dev_err(dev,
+		dev_info(dev,
 			"%s: Error, segment size is %llu, expected between 1 and %llu\n",
 			__func__, segment_size, host_image_buffer_size);
 		return -EINVAL;
@@ -332,7 +332,7 @@ static int calculate_urb_sizes(struct u3v_stream *stream,
 		stream->u3v_dev->u3v_info->segmented_xfer_enabled);
 
 	if (sg_constraint && (segment_padding != 0)) {
-		dev_err(dev,
+		dev_info(dev,
 			"%s: segment padding is %u, but segmented transfers are not supported on this system\n",
 			__func__, segment_padding);
 		return U3V_ERR_SEGMENTED_XFER_NOT_AVAIL;
@@ -376,7 +376,7 @@ static int calculate_urb_sizes(struct u3v_stream *stream,
 		 */
 		if (chunk_data_buffer_size != 0) {
 			if (transfer2_size != 0) {
-				dev_err(dev,
+				dev_info(dev,
 					"%s: Cannot split the image and chunk data into separate buffers because the image size is not a multiple of the required transfer alignment size\n",
 					__func__);
 				return U3V_ERR_IMAGE_SIZE_NOT_ALIGNED;
@@ -387,7 +387,7 @@ static int calculate_urb_sizes(struct u3v_stream *stream,
 			if (transfer1_size != 0 &&
 			   (aligned_cd_buffer_size >
 			    aligned_max_transfer_size)) {
-				dev_err(dev, "%s: Chunk data size too big\n",
+				dev_info(dev, "%s: Chunk data size too big\n",
 				__func__);
 				return U3V_ERR_CHUNK_DATA_SIZE_TOO_BIG;
 			}
@@ -464,7 +464,7 @@ static int calculate_urb_sizes(struct u3v_stream *stream,
 		alignment_padding) < ((payload_size * payload_count) +
 		transfer1_size)) {
 
-		dev_err(dev,
+		dev_info(dev,
 			"%s: buffer sizes are too small to hold all of the requested DMA payload data. Total buffer size = %llu, calculated DMA size is at least %u\n",
 			__func__,
 			(device_image_buffer_size + chunk_data_buffer_size +
@@ -480,48 +480,48 @@ static int calculate_urb_sizes(struct u3v_stream *stream,
 
 	/* Validate calculated sizes */
 
-	dev_dbg(dev, "%s: host image buffer size = %llu\n",
+	dev_info(dev, "%s: host image buffer size = %llu\n",
 		__func__, host_image_buffer_size);
-	dev_dbg(dev, "%s: device image buffer size = %llu\n",
+	dev_info(dev, "%s: device image buffer size = %llu\n",
 		__func__, device_image_buffer_size);
-	dev_dbg(dev, "%s: chunk data buffer size = %llu\n",
+	dev_info(dev, "%s: chunk data buffer size = %llu\n",
 		__func__, chunk_data_buffer_size);
-	dev_dbg(dev, "%s: payload size = %u\n",
+	dev_info(dev, "%s: payload size = %u\n",
 		__func__, payload_size);
-	dev_dbg(dev, "%s: payload count = %u\n",
+	dev_info(dev, "%s: payload count = %u\n",
 		__func__, payload_count);
-	dev_dbg(dev, "%s: transfer1 = %u\n",
+	dev_info(dev, "%s: transfer1 = %u\n",
 		__func__, transfer1_size);
-	dev_dbg(dev, "%s: transfer2 = %u\n",
+	dev_info(dev, "%s: transfer2 = %u\n",
 		__func__, transfer2_size);
-	dev_dbg(dev, "%s: transfer2_data = %u\n",
+	dev_info(dev, "%s: transfer2_data = %u\n",
 		__func__, transfer2_data_size);
-	dev_dbg(dev, "%s: max_pglist_count = %u\n",
+	dev_info(dev, "%s: max_pglist_count = %u\n",
 		__func__, max_pglist_count);
-	dev_dbg(dev, "%s: alignment_padding = %u\n",
+	dev_info(dev, "%s: alignment_padding = %u\n",
 		__func__, alignment_padding);
-	dev_dbg(dev, "%s: segment_padding = %u\n",
+	dev_info(dev, "%s: segment_padding = %u\n",
 		__func__, segment_padding);
-	dev_dbg(dev, "%s: segment_size = %llu\n",
+	dev_info(dev, "%s: segment_size = %llu\n",
 		__func__, segment_size);
-	dev_dbg(dev, "%s: sg_constraint = %s\n",
+	dev_info(dev, "%s: sg_constraint = %s\n",
 		__func__, (sg_constraint ? "true" : "false"));
 
 	if (device_image_buffer_size == 0 || max_leader_size == 0 ||
 	    max_trailer_size == 0) {
-		dev_err(dev,
+		dev_info(dev,
 			"%s: leader, trailer, and image buffer sizes cannot be 0\n",
 			__func__);
-		dev_err(dev, "\tdevice image buffer size is %llu\n",
+		dev_info(dev, "\tdevice image buffer size is %llu\n",
 			device_image_buffer_size);
-		dev_err(dev, "\tmax leader buffer size is %u\n",
+		dev_info(dev, "\tmax leader buffer size is %u\n",
 			max_leader_size);
-		dev_err(dev, "\tmax trailer buffer size is %u\n",
+		dev_info(dev, "\tmax trailer buffer size is %u\n",
 			max_trailer_size);
 		return -EINVAL;
 	}
 	if (transfer2_data_size > transfer2_size) {
-		dev_err(dev,
+		dev_info(dev,
 			"%s: final transfer 2 data size (%u) exceeds the size of the buffer (%u)\n",
 			__func__, transfer2_data_size, transfer2_size);
 		return -EINVAL;
@@ -531,7 +531,7 @@ static int calculate_urb_sizes(struct u3v_stream *stream,
 		alignment_padding) < ((payload_size * payload_count) +
 		transfer1_size + transfer2_data_size)) {
 
-		dev_err(dev,
+		dev_info(dev,
 			"%s: buffer sizes are too small to hold all of the requested DMA payload data. Total buffer size = %llu, calculated DMA size = %u\n",
 			__func__,
 			(device_image_buffer_size + chunk_data_buffer_size +
@@ -561,7 +561,7 @@ static int calculate_urb_sizes(struct u3v_stream *stream,
 		ret = put_user(stream->config.max_leader_size,
 			config_stream->u_max_leader_size);
 		if (ret != 0) {
-			dev_err(dev,
+			dev_info(dev,
 				"%s: Error copying max leader size to user\n",
 				__func__);
 			goto error;
@@ -572,7 +572,7 @@ static int calculate_urb_sizes(struct u3v_stream *stream,
 		ret = put_user(stream->config.max_trailer_size,
 			config_stream->u_max_trailer_size);
 		if (ret != 0) {
-			dev_err(dev,
+			dev_info(dev,
 				"%s: Error copying max trailer size to user\n",
 				__func__);
 			goto error;
@@ -662,7 +662,7 @@ int u3v_configure_buffer(struct u3v_stream *stream,
 	     (u_chunk_data_buffer != NULL &&
 	     stream->config.chunk_data_buffer_size == 0)) {
 
-		dev_err(dev,
+		dev_info(dev,
 			"%s: Invalid chunk data buffer address and size combination\n",
 			__func__);
 		return -EINVAL;
@@ -749,7 +749,7 @@ static int create_buffer(struct u3v_stream *stream,
 		ret = configure_urbs(stream, entry, u_image_buffer,
 			u_chunk_data_buffer);
 	if (ret != 0) {
-		dev_err(dev, "%s: Configuring urbs failed with error %d\n",
+		dev_info(dev, "%s: Configuring urbs failed with error %d\n",
 			__func__, ret);
 		goto error;
 	}
@@ -757,7 +757,7 @@ static int create_buffer(struct u3v_stream *stream,
 	for (i = 0; i < entry->urb_info_count; i++) {
 		ret = create_sglist(stream, &entry->urb_info_array[i]);
 		if (ret != 0) {
-			dev_err(dev,
+			dev_info(dev,
 				"%s: Creating sglist failed with error %d\n",
 				__func__, ret);
 			goto error;
@@ -876,7 +876,7 @@ static int configure_urbs(struct u3v_stream *stream,
 			payload_bytes_remaining -= buffer_size;
 		}
 		if (payload_bytes_remaining != 0) {
-			dev_err(stream->u3v_dev->device,
+			dev_info(stream->u3v_dev->device,
 				"%s: Error, unexpected result for calculated payload transfer bytes\n",
 				__func__);
 			ret = U3V_ERR_INTERNAL;
@@ -894,7 +894,7 @@ static int configure_urbs(struct u3v_stream *stream,
 
 	if (device_bytes_remaining) {
 		if (device_bytes_remaining > transfer1_bytes_remaining) {
-			dev_err(stream->u3v_dev->device,
+			dev_info(stream->u3v_dev->device,
 				"%s: Error, transfer1 bytes remaining is %u, but we still have %llu image bytes remaining\n",
 				__func__, transfer1_bytes_remaining,
 				device_bytes_remaining);
@@ -925,7 +925,7 @@ static int configure_urbs(struct u3v_stream *stream,
 			goto exit;
 		}
 		if (device_bytes_remaining > transfer1_bytes_remaining) {
-			dev_err(stream->u3v_dev->device,
+			dev_info(stream->u3v_dev->device,
 				"%s: Error, transfer1 bytes remaining is %u, but we still have %llu chunk data bytes remaining\n",
 				__func__, transfer1_bytes_remaining,
 				device_bytes_remaining);
@@ -952,7 +952,7 @@ static int configure_urbs(struct u3v_stream *stream,
 		transfer1_bytes_remaining -= alignment_padding;
 	}
 	if (transfer1_bytes_remaining != 0) {
-		dev_err(stream->u3v_dev->device,
+		dev_info(stream->u3v_dev->device,
 			"%s: Error, unexpected result for calculated final transfer 1 bytes\n",
 				__func__);
 		ret = U3V_ERR_INTERNAL;
@@ -970,7 +970,7 @@ static int configure_urbs(struct u3v_stream *stream,
 	     (host_image_offset != stream->config.host_image_buffer_size) ||
 	     (device_image_offset != stream->config.device_image_buffer_size) ||
 	     (chunk_data_offset != stream->config.chunk_data_buffer_size)) {
-		dev_err(stream->u3v_dev->device,
+		dev_info(stream->u3v_dev->device,
 			"%s: error configuring buffer sizes\n", __func__);
 		ret = U3V_ERR_INTERNAL;
 	}
@@ -1145,7 +1145,7 @@ static int configure_urbs_sg_constraint(struct u3v_stream *stream,
 	     (image_offset != stream->config.device_image_buffer_size) ||
 	     (chunk_data_offset != stream->config.chunk_data_buffer_size)) {
 
-		dev_err(stream->u3v_dev->device,
+		dev_info(stream->u3v_dev->device,
 			"%s: error configuring buffer sizes\n", __func__);
 		ret = U3V_ERR_INTERNAL;
 	}
@@ -1308,7 +1308,7 @@ static struct u3v_pglist *create_pglist(struct u3v_stream *stream,
 
 	return pglist;
 error:
-	dev_err(dev, "%s: Error creating pglist with %s buffer\n",
+	dev_info(dev, "%s: Error creating pglist with %s buffer\n",
 		__func__, (pglist->kernel_allocated ? "kernel" : "user"));
 	/* 0 because pages are not dirty */
 	destroy_pglist(pglist, 0);
@@ -1355,20 +1355,22 @@ static struct page **lock_user_pages(struct u3v_stream *stream,
 #else
 	down_read(&current->mm->mmap_lock);
 #endif
-
-/* will store a page locked array of physical pages in pages var */
+	/* will store a page locked array of physical pages in pages var */
+	ret = get_user_pages(
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
-	ret = get_user_pages(current, current->mm, uaddr, num_pages, WRITE, 0, pages, NULL);
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0)
-	ret = get_user_pages(uaddr, num_pages, WRITE, 0, pages, NULL);
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(6, 5, 0)
-	// replace get_user_pages() write/force parameters with gup_flags in Commit 768ae30
-	ret = get_user_pages(uaddr, num_pages, FOLL_WRITE, pages, NULL);
-#else
-	// vmas parameter removed from get_user_pages() in Commit 54d0206
-	ret = get_user_pages(uaddr, num_pages, FOLL_WRITE, pages);
+		current,
+		current->mm,
 #endif
-
+		uaddr,
+		num_pages,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0)
+		WRITE,
+		0, /* Don't force */
+#else
+		FOLL_WRITE,
+#endif
+		pages,
+		NULL);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
 	up_read(&current->mm->mmap_sem);
 #else
@@ -1376,7 +1378,7 @@ static struct page **lock_user_pages(struct u3v_stream *stream,
 #endif
 
 	if (ret < num_pages) {
-		dev_err(dev, "%s: get_user_pages returned %d, expected %d\n",
+		dev_info(dev, "%s: get_user_pages returned %d, expected %d\n",
 			__func__, ret, num_pages);
 		goto err_unlock;
 	}
@@ -1527,7 +1529,7 @@ static int calculate_sglist_entries(struct u3v_stream *stream,
 					 * with w_max_packet_size only if it's
 					 * the first or last entry in the list
 					 */
-					dev_err(stream->u3v_dev->device,
+					dev_info(stream->u3v_dev->device,
 						"%s: invalid buffer: if sg_constraint is true, a buffer can only have a scatterlist entry smaller than w_max_packet_size if it's the first or last in the list\n",
 						__func__);
 					return U3V_ERR_INTERNAL;
@@ -1568,7 +1570,7 @@ static int calculate_sglist_entries(struct u3v_stream *stream,
 		}
 	}
 	if (configure && sg_count != urb_info->sgt->nents) {
-		dev_err(stream->u3v_dev->device,
+		dev_info(stream->u3v_dev->device,
 			"%s: Error configuring sglist: counted %u elements, expected %u\n",
 				__func__, sg_count, urb_info->sgt->nents);
 		return U3V_ERR_INTERNAL;
@@ -1670,13 +1672,13 @@ static int destroy_buffer(struct u3v_stream *stream, u64 buffer_id)
 	entry = search_buffer_entries(stream, buffer_id);
 
 	if (entry == NULL) {
-		dev_err(dev, "%s: Failed to find entry with buffer id %llu\n",
+		dev_info(dev, "%s: Failed to find entry with buffer id %llu\n",
 			__func__, buffer_id);
 		return -EINVAL;
 	}
 
 	if (entry->state == u3v_queued) {
-		dev_err(dev, "%s: Buffer is in use, cannot be unconfigured\n",
+		dev_info(dev, "%s: Buffer is in use, cannot be unconfigured\n",
 			__func__);
 		return U3V_ERR_BUFFER_STILL_IN_USE;
 	}
@@ -1804,14 +1806,14 @@ int u3v_queue_buffer(struct u3v_stream *stream, u64 buffer_id)
 	entry = search_buffer_entries(stream, buffer_id);
 
 	if (entry == NULL) {
-		dev_err(dev, "%s: Failed to find entry with id %llu\n",
+		dev_info(dev, "%s: Failed to find entry with id %llu\n",
 			__func__, buffer_id);
 		ret = U3V_ERR_INTERNAL;
 		goto exit;
 	}
 
 	if (entry->state == u3v_queued) {
-		dev_err(dev, "%s: Error, buffer %llu is already queued\n",
+		dev_info(dev, "%s: Error, buffer %llu is already queued\n",
 			__func__, buffer_id);
 		ret = U3V_ERR_INTERNAL;
 		goto exit;
@@ -1889,7 +1891,7 @@ static int submit_stream_urb(struct u3v_stream *stream,
 	ret = usb_submit_urb(urb_info->purb, GFP_KERNEL);
 	if (ret != 0) {
 		usb_unanchor_urb(urb_info->purb);
-		dev_err(dev, "%s: Error %d submitting urb\n", __func__, ret);
+		dev_info(dev, "%s: Error %d submitting urb\n", __func__, ret);
 	}
 
 	return ret;
@@ -1928,19 +1930,19 @@ static void stream_urb_completion(struct urb *purb)
 		  purb->status == -ESHUTDOWN ||
 		  purb->status == -EPROTO ||
 		  purb->status == -EPIPE)) {
-		dev_err(dev, "%s: Received nonzero urb completion status: %d",
+		dev_info(dev, "%s: Received nonzero urb completion status: %d",
 			__func__, purb->status);
 	}
 	urb_info = (struct u3v_urb_info *)(purb->context);
 	if (urb_info == NULL) {
-		dev_err(dev, "%s: Received a NULL context pointer\n",
+		dev_info(dev, "%s: Received a NULL context pointer\n",
 			__func__);
 		return;
 	}
 
 	entry = urb_info->entry;
 	if (entry == NULL) {
-		dev_err(dev, "%s: Received a NULL buffer entry pointer\n",
+		dev_info(dev, "%s: Received a NULL buffer entry pointer\n",
 			__func__);
 		return;
 	}
@@ -1955,7 +1957,7 @@ static void stream_urb_completion(struct urb *purb)
 
 	WARN_ON(entry->state != u3v_queued);
 	if (len < urb_info->expected_size) {
-		dev_dbg(dev,
+		dev_info(dev,
 			"%s: entry %llu, urb %u: length = %u, expected >=%u\n",
 			__func__, entry->buffer_id, urb_info->urb_index, len,
 			urb_info->expected_size);
@@ -2038,28 +2040,28 @@ int u3v_wait_for_buffer(struct u3v_stream *stream, u64 buffer_id,
 	entry = search_buffer_entries(stream, buffer_id);
 
 	if (entry == NULL) {
-		dev_err(dev, "%s: Failed to find buffer with id %llu\n",
+		dev_info(dev, "%s: Failed to find buffer with id %llu\n",
 			__func__, buffer_id);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if (entry->state == u3v_idle) {
-		dev_err(dev, "%s: Error, cannot wait for idle buffer\n",
+		dev_info(dev, "%s: Error, cannot wait for idle buffer\n",
 			__func__);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if (entry->state == u3v_cancelled) {
-		dev_err(dev, "%s: Error, cannot wait for cancelled buffer\n",
+		dev_info(dev, "%s: Error, cannot wait for cancelled buffer\n",
 			__func__);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if (stream->wait_in_progress) {
-		dev_err(dev, "%s: Error, wait is already in progress\n",
+		dev_info(dev, "%s: Error, wait is already in progress\n",
 			__func__);
 		ret = U3V_ERR_ALREADY_WAITING;
 		goto exit;
@@ -2077,14 +2079,14 @@ int u3v_wait_for_buffer(struct u3v_stream *stream, u64 buffer_id,
 	}
 
 	if (ret != 0) {
-		dev_err(dev, "%s: Error, interrupted by signal\n",
+		dev_info(dev, "%s: Error, interrupted by signal\n",
 			__func__);
 		ret = U3V_ERR_BUFFER_WAIT_CANCELED;
 		goto exit;
 	}
 
 	if (entry->state != u3v_complete) {
-		dev_err(dev,
+		dev_info(dev,
 			"%s: Cannot copy from the requested buffer because it has been requeued or cancelled\n",
 			__func__);
 		ret = U3V_ERR_BUFFER_CANNOT_BE_COPIED;
@@ -2103,7 +2105,7 @@ int u3v_wait_for_buffer(struct u3v_stream *stream, u64 buffer_id,
 			entry->urb_info_array[leader_index].pglists[0]),
 			min(entry->leader_received_size, leader_size));
 		if (ret != 0) {
-			dev_err(dev, "%s: Error copying leader buffer\n",
+			dev_info(dev, "%s: Error copying leader buffer\n",
 				__func__);
 			goto exit;
 		}
@@ -2120,7 +2122,7 @@ int u3v_wait_for_buffer(struct u3v_stream *stream, u64 buffer_id,
 				entry->urb_info_array[transfer2_index].
 				expected_size));
 		if (ret != 0) {
-			dev_err(dev,  "%s: Error copying transfer2 buffer\n",
+			dev_info(dev,  "%s: Error copying transfer2 buffer\n",
 				__func__);
 			goto exit;
 		}
@@ -2133,7 +2135,7 @@ int u3v_wait_for_buffer(struct u3v_stream *stream, u64 buffer_id,
 			entry->urb_info_array[trailer_index].pglists[0]),
 			min(entry->trailer_received_size, trailer_size));
 		if (ret != 0) {
-			dev_err(dev,  "%s: Error copying trailer buffer\n",
+			dev_info(dev,  "%s: Error copying trailer buffer\n",
 				__func__);
 			goto exit;
 		}
@@ -2152,7 +2154,7 @@ int u3v_wait_for_buffer(struct u3v_stream *stream, u64 buffer_id,
 		ret = copy_to_user(u_buffer_complete_data, &bcd,
 			bcd.structure_size);
 		if (ret != 0) {
-			dev_err(dev, "%s: Error copying buffer metadata\n",
+			dev_info(dev, "%s: Error copying buffer metadata\n",
 				__func__);
 			goto exit;
 		}
@@ -2227,7 +2229,7 @@ static int reset_stream(struct u3v_stream *stream)
 			      0,	/* size */
 			      U3V_TIMEOUT);
 			if (ret != 0) {
-				dev_err(u3v->device,
+				dev_info(u3v->device,
 					"%s: Error %d stalling ep %02X\n",
 					__func__, ret, ep_addr);
 				return ret;
@@ -2241,7 +2243,7 @@ static int reset_stream(struct u3v_stream *stream)
 			ret = usb_clear_halt(udev,
 				usb_rcvbulkpipe(udev, ep_addr));
 			if (ret != 0) {
-				dev_err(u3v->device,
+				dev_info(u3v->device,
 					"%s: Error %d clearing halt on ep %02X\n",
 					__func__, ret, ep_addr);
 			}

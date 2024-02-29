@@ -332,7 +332,7 @@ static long u3v_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	}
 
 	if ((_IOC_TYPE(cmd) != U3V_MAGIC) || (_IOC_NR(cmd) > U3V_MAX_NR)) {
-		dev_err(dev, "%s: Received invalid command %X\n",
+		dev_info(dev, "%s: Received invalid command %X\n",
 			 __func__, cmd);
 		return U3V_ERR_NOT_SUPPORTED;
 	}
@@ -660,7 +660,7 @@ static int u3v_open(struct inode *inode, struct file *filp)
 	 */
 	if (!atomic_dec_and_test(&u3v->device_available)) {
 		atomic_inc(&u3v->device_available);
-		dev_err(u3v->device, "%s: device is not available\n",
+		dev_info(u3v->device, "%s: device is not available\n",
 			__func__);
 		return -EBUSY;
 	}
@@ -743,7 +743,7 @@ static int get_stream_capabilities(struct u3v_device *u3v)
 		ABRM_SBRM_ADDRESS, &sbrm_address);
 
 	if (ret != 0) {
-		dev_err(dev, "%s: Error reading SBRM address\n", __func__);
+		dev_info(dev, "%s: Error reading SBRM address\n", __func__);
 		goto exit;
 	}
 	/* Check capabilities to see if SIRM is available */
@@ -752,7 +752,7 @@ static int get_stream_capabilities(struct u3v_device *u3v)
 		&u3v_capability);
 
 	if (ret != 0) {
-		dev_err(dev, "%s: Error reading U3VCP capability\n", __func__);
+		dev_info(dev, "%s: Error reading U3VCP capability\n", __func__);
 		goto exit;
 	}
 
@@ -763,7 +763,7 @@ static int get_stream_capabilities(struct u3v_device *u3v)
 			&u3v->u3v_info->sirm_addr);
 
 		if (ret != 0) {
-			dev_err(dev, "%s: Error reading SIRM address\n",
+			dev_info(dev, "%s: Error reading SIRM address\n",
 				__func__);
 			goto exit;
 		}
@@ -773,7 +773,7 @@ static int get_stream_capabilities(struct u3v_device *u3v)
 			&si_info);
 
 		if (ret != 0) {
-			dev_err(dev, "%s: Error reading SI info\n", __func__);
+			dev_info(dev, "%s: Error reading SI info\n", __func__);
 			goto exit;
 		}
 
@@ -822,7 +822,7 @@ static int u3v_configure_stream(struct u3v_device *u3v,
 		req_trailer_size);
 
 	if (ret != 0) {
-		dev_err(dev,
+		dev_info(dev,
 			"%s: Error %d configuring stream interface\n",
 			__func__, ret);
 		u3v_destroy_stream(u3v);
@@ -876,7 +876,7 @@ static int read_stream_registers(struct u3v_device *u3v,
 		req_leader_size);
 
 	if (ret != 0) {
-		dev_err(dev, "%s: Error reading required leader size\n",
+		dev_info(dev, "%s: Error reading required leader size\n",
 			__func__);
 		goto exit;
 	}
@@ -887,7 +887,7 @@ static int read_stream_registers(struct u3v_device *u3v,
 		&trailer_size);
 
 	if (ret != 0) {
-		dev_err(dev, "%s: Error reading required trailer size\n",
+		dev_info(dev, "%s: Error reading required trailer size\n",
 			__func__);
 		goto exit;
 	}
@@ -965,7 +965,7 @@ static int write_stream_registers(struct u3v_device *u3v)
 	PUT_INTERFACE(u3v->control_info);
 	return 0;
 error:
-	dev_err(dev, "%s: Error setting stream interface registers\n",
+	dev_info(dev, "%s: Error setting stream interface registers\n",
 		__func__);
 	PUT_INTERFACE(u3v->control_info);
 	return ret;
@@ -1162,16 +1162,16 @@ static int populate_u3v_properties(struct u3v_device *u3v)
 	    (buffer[1] != U3V_INTERFACE) ||
 	    (buffer[2] != U3V_DEVICEINFO)) {
 
-		dev_err(u3v->device,
+		dev_info(u3v->device,
 			"%s: Failed to get a proper Camera Info descriptor.\n",
 			__func__);
-		dev_err(u3v->device,
+		dev_info(u3v->device,
 			"Descriptor Type = 0x%02X (Expected 0x%02X)\n",
 			buffer[1], U3V_INTERFACE);
-		dev_err(u3v->device,
+		dev_info(u3v->device,
 			"Descriptor SubType = 0x%02X (Expected 0x%02X)\n",
 			buffer[2], U3V_DEVICEINFO);
-		dev_err(u3v->device,
+		dev_info(u3v->device,
 			"Descriptor Length = 0x%02X (Expected 0x%02X)\n",
 			buflen, MIN_U3V_INFO_LENGTH);
 		return U3V_ERR_INVALID_USB_DESCRIPTOR;
@@ -1327,6 +1327,10 @@ static int enumerate_u3v_interfaces(struct u3v_device *u3v)
 
 	num_interfaces = udev->actconfig->desc.bNumInterfaces;
 
+	dev_info(u3v->device,
+		"%s: there is %x interfaces needed to be enumerate.\n",
+		__func__, num_interfaces);
+
 	for (i = 0; i < num_interfaces; i++) {
 		tmp = usb_ifnum_to_if(udev, i);
 		if (tmp == NULL)
@@ -1352,7 +1356,7 @@ static int enumerate_u3v_interfaces(struct u3v_device *u3v)
 				u3v);
 
 			if (ret != 0) {
-				dev_err(u3v->device,
+				dev_info(u3v->device,
 					"%s: event interface for device %d is already claimed\n",
 					__func__,
 					u3v->udev->devnum);
@@ -1369,7 +1373,7 @@ static int enumerate_u3v_interfaces(struct u3v_device *u3v)
 				u3v);
 
 			if (ret != 0) {
-				dev_err(u3v->device,
+				dev_info(u3v->device,
 					"%s: stream interface for device %d is already claimed\n",
 					__func__,
 					u3v->udev->devnum);
@@ -1421,6 +1425,8 @@ static int u3v_probe(struct usb_interface *interface,
 	atomic_set(&u3v->device_available, 1);
 	u3v->device_connected = true;
 
+	dev_info(u3v->device, "%s...\n", __func__);
+
 	/*
 	 * xhci has a bug with stalling and clearing endpoints
 	 * if the stall is initiated by software. For now, we only stall
@@ -1431,7 +1437,7 @@ static int u3v_probe(struct usb_interface *interface,
 
 	/* Populate u3v_info */
 	if (populate_u3v_properties(u3v) < 0) {
-		dev_err(u3v->device, "%s: Error populating u3v device info\n",
+		dev_info(u3v->device, "%s: Error populating u3v device info\n",
 			__func__);
 		ret = U3V_ERR_INVALID_USB_DESCRIPTOR;
 		goto error;
@@ -1461,13 +1467,13 @@ static int u3v_probe(struct usb_interface *interface,
 	ret = usb_register_dev(u3v->intf, &u3v_class);
 
 	if (ret < 0) {
-		dev_err(u3v->device, "%s: Failed to register device\n",
+		dev_info(u3v->device, "%s: Failed to register device\n",
 			__func__);
 		goto error;
 	}
 
-	dev_info(u3v->device, "%s: Registering device %d\n",
-		DRIVER_DESC, u3v->udev->devnum);
+	dev_info(u3v->device, "%s, %s: Registering device %d\n",
+		__func__, DRIVER_DESC, u3v->udev->devnum);
 
 	/* Save our data pointer in this interface device */
 	usb_set_intfdata(interface, u3v);
@@ -1536,7 +1542,7 @@ static int reset_endpoint(struct u3v_device *u3v,
 			      0,	/* size */
 			      U3V_TIMEOUT);
 	if (ret != 0) {
-		dev_err(u3v->device, "%s: Error %d from stalling ep %02X\n",
+		dev_info(u3v->device, "%s: Error %d from stalling ep %02X\n",
 			__func__, ret, ep_addr);
 		return ret;
 	}
@@ -1547,7 +1553,7 @@ static int reset_endpoint(struct u3v_device *u3v,
 		ret = usb_clear_halt(udev, usb_sndbulkpipe(udev, ep_addr));
 
 	if (ret != 0) {
-		dev_err(u3v->device, "%s: Error %d resetting ep %02X\n",
+		dev_info(u3v->device, "%s: Error %d resetting ep %02X\n",
 			__func__, ret, ep_addr);
 	}
 	return ret;

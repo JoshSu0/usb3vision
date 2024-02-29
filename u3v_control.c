@@ -68,7 +68,7 @@ int u3v_create_control(struct u3v_device *u3v)
 		return -ENODEV;
 
 	if (u3v->control_info.interface_ptr != NULL) {
-		dev_err(u3v->device,
+		dev_info(u3v->device,
 			"%s: Control interface already created\n", __func__);
 		return U3V_ERR_INTERNAL;
 	}
@@ -76,7 +76,7 @@ int u3v_create_control(struct u3v_device *u3v)
 	if (u3v->control_info.bulk_in == NULL ||
 		u3v->control_info.bulk_out == NULL) {
 
-		dev_err(u3v->device,
+		dev_info(u3v->device,
 			"%s: Did not detect bulk in and bulk out endpoints in the control interface.\n",
 			__func__);
 		return U3V_ERR_NO_CONTROL_INTERFACE;
@@ -112,7 +112,7 @@ int u3v_create_control(struct u3v_device *u3v)
 		kzalloc(ctrl->max_cmd_transfer_size, GFP_KERNEL);
 
 	if (ctrl->ack_buffer == NULL || ctrl->cmd_buffer == NULL) {
-		dev_err(dev, "%s: Error allocating control buffers\n",
+		dev_info(dev, "%s: Error allocating control buffers\n",
 			__func__);
 		ret = -ENOMEM;
 		goto error;
@@ -130,7 +130,7 @@ int u3v_create_control(struct u3v_device *u3v)
 		ABRM_MAX_DEVICE_RESPONSE_TIME, &max_response);
 
 	if ((ret < 0) || (bytes_read != sizeof(__le32))) {
-		dev_err(dev, "%s: Error reading max device response time\n",
+		dev_info(dev, "%s: Error reading max device response time\n",
 			__func__);
 		goto error;
 	}
@@ -142,7 +142,7 @@ int u3v_create_control(struct u3v_device *u3v)
 		ABRM_SBRM_ADDRESS, &sbrm_address);
 
 	if ((ret < 0) || (bytes_read != sizeof(u64))) {
-		dev_err(dev, "%s: Error reading SBRM address\n", __func__);
+		dev_info(dev, "%s: Error reading SBRM address\n", __func__);
 		goto error;
 	}
 
@@ -150,7 +150,7 @@ int u3v_create_control(struct u3v_device *u3v)
 		sbrm_address + SBRM_MAX_CMD_TRANSFER, &cmd_buffer_size);
 
 	if ((ret < 0) || (bytes_read != sizeof(__le32))) {
-		dev_err(dev, "%s: Error reading maximum command transfer size\n",
+		dev_info(dev, "%s: Error reading maximum command transfer size\n",
 			__func__);
 		goto error;
 	}
@@ -162,7 +162,7 @@ int u3v_create_control(struct u3v_device *u3v)
 		sbrm_address + SBRM_MAX_ACK_TRANSFER, &ack_buffer_size);
 
 	if ((ret < 0) || (bytes_read != sizeof(__le32))) {
-		dev_err(dev, "%s: Error reading maximum ack transfer size\n",
+		dev_info(dev, "%s: Error reading maximum ack transfer size\n",
 			__func__);
 		goto error;
 	}
@@ -252,19 +252,19 @@ int u3v_read_memory(struct u3v_control *ctrl, u32 transfer_size,
 	dev = u3v->device;
 
 	if (cmd_buffer_size > ctrl->max_cmd_transfer_size) {
-		dev_err(dev,
+		dev_info(dev,
 			"%s: Requested command buffer of size %zu, but maximum size is %d\n",
 			__func__, cmd_buffer_size, ctrl->max_cmd_transfer_size);
 		return -EINVAL;
 	}
 
 	if (max_bytes_per_read <= 0) {
-		dev_err(dev, "%s: Requested ack buffer of size <= 0\n",
+		dev_info(dev, "%s: Requested ack buffer of size <= 0\n",
 			__func__);
 		return -EINVAL;
 	}
 
-	dev_dbg(dev, "u3v_read_memory: address = %llX, transfer_size = %d",
+	dev_info(dev, "u3v_read_memory: address = %llX, transfer_size = %d",
 		address, transfer_size);
 
 	mutex_lock(&ctrl->read_write_lock);
@@ -297,7 +297,7 @@ int u3v_read_memory(struct u3v_control *ctrl, u32 transfer_size,
 			&actual, ctrl->u3v_timeout);
 
 		if (ret < 0) {
-			dev_err(dev, "%s: Error %d from usb_bulk_msg out\n",
+			dev_info(dev, "%s: Error %d from usb_bulk_msg out\n",
 				__func__, ret);
 			if (!u3v->stalling_disabled)
 				reset_pipe(u3v, &u3v->control_info);
@@ -334,7 +334,7 @@ int u3v_read_memory(struct u3v_control *ctrl, u32 transfer_size,
 			 * response
 			 */
 			if (ret < 0) {
-				dev_err(dev, "%s: Error %d from usb_bulk_msg in\n",
+				dev_info(dev, "%s: Error %d from usb_bulk_msg in\n",
 					__func__, ret);
 				if (!u3v->stalling_disabled)
 					reset_pipe(u3v, &u3v->control_info);
@@ -370,19 +370,19 @@ int u3v_read_memory(struct u3v_control *ctrl, u32 transfer_size,
 				(ack->header.length !=
 				sizeof(struct pending_ack_payload)))) {
 
-				dev_err(dev,
+				dev_info(dev,
 					"%s: received an invalid READMEM_ACK buffer\n",
 					__func__);
-				dev_err(dev, "\tPrefix = 0x%X, expected 0x%X\n",
+				dev_info(dev, "\tPrefix = 0x%X, expected 0x%X\n",
 					ack->header.prefix, U3V_CONTROL_PREFIX);
-				dev_err(dev, "\tCmd = 0x%X, expected 0x%X or 0x%X\n",
+				dev_info(dev, "\tCmd = 0x%X, expected 0x%X or 0x%X\n",
 					ack->header.cmd, READMEM_ACK,
 					PENDING_ACK);
-				dev_err(dev, "\tStatus = 0x%X, expected 0x%X\n",
+				dev_info(dev, "\tStatus = 0x%X, expected 0x%X\n",
 					ack->header.status, U3V_ERR_NO_ERROR);
-				dev_err(dev, "\tAck Id = 0x%X, expected 0x%X\n",
+				dev_info(dev, "\tAck Id = 0x%X, expected 0x%X\n",
 					ack->header.ack_id, ctrl->request_id);
-				dev_err(dev, "\tPayload length = %d, expected %zu\n",
+				dev_info(dev, "\tPayload length = %d, expected %zu\n",
 					ack->header.length,
 					ack->header.cmd == PENDING_ACK ?
 					sizeof(struct pending_ack_payload) :
@@ -400,7 +400,7 @@ int u3v_read_memory(struct u3v_control *ctrl, u32 transfer_size,
 			 * the read request
 			 */
 			if (ack->header.cmd == PENDING_ACK) {
-				dev_dbg(dev, "%s: received pending ack, resubmitting\n",
+				dev_info(dev, "%s: received pending ack, resubmitting\n",
 					__func__);
 				pending_ack = (struct pending_ack_payload *)
 					(ack->payload);
@@ -418,7 +418,7 @@ int u3v_read_memory(struct u3v_control *ctrl, u32 transfer_size,
 	}
 
 	if (total_bytes_read != transfer_size)
-		dev_err(dev, "%s: total_bytes != xfer: total is %d and xfer is %d",
+		dev_info(dev, "%s: total_bytes != xfer: total is %d and xfer is %d",
 			__func__, total_bytes_read, transfer_size);
 
 	/* Extract the data */
@@ -484,7 +484,7 @@ int u3v_write_memory(struct u3v_control *ctrl, u32 transfer_size,
 		return 0;
 
 	if (ack_buffer_size > ctrl->max_ack_transfer_size) {
-		dev_err(dev,
+		dev_info(dev,
 			"%s: Requested ack buffer of size %zu, but maximum size is %d\n",
 			__func__, ack_buffer_size, ctrl->max_ack_transfer_size);
 		ret = -EINVAL;
@@ -492,13 +492,13 @@ int u3v_write_memory(struct u3v_control *ctrl, u32 transfer_size,
 	}
 
 	if (max_bytes_per_write <= 0) {
-		dev_err(dev, "%s: Requested cmd buffer of size <= 0\n",
+		dev_info(dev, "%s: Requested cmd buffer of size <= 0\n",
 			__func__);
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	dev_dbg(dev, "%s: write mem: address = %llX, transfer_size = %d",
+	dev_info(dev, "%s: write mem: address = %llX, transfer_size = %d",
 		__func__, address, transfer_size);
 
 	mutex_lock(&ctrl->read_write_lock);
@@ -534,7 +534,7 @@ int u3v_write_memory(struct u3v_control *ctrl, u32 transfer_size,
 			&actual, ctrl->u3v_timeout);
 
 		if (ret < 0) {
-			dev_err(dev, "%s: Error %d from usb_bulk_msg out\n",
+			dev_info(dev, "%s: Error %d from usb_bulk_msg out\n",
 				__func__, ret);
 			if (!u3v->stalling_disabled)
 				reset_pipe(u3v, &u3v->control_info);
@@ -562,7 +562,7 @@ int u3v_write_memory(struct u3v_control *ctrl, u32 transfer_size,
 			 * response
 			 */
 			if (ret < 0) {
-				dev_err(dev, "%s: Error %d from usb_bulk_msg in\n",
+				dev_info(dev, "%s: Error %d from usb_bulk_msg in\n",
 					__func__, ret);
 				if (!u3v->stalling_disabled)
 					reset_pipe(u3v, &u3v->control_info);
@@ -606,29 +606,29 @@ int u3v_write_memory(struct u3v_control *ctrl, u32 transfer_size,
 				(write_mem_ack->bytes_written !=
 				bytes_this_iteration))) {
 
-				dev_err(dev,
+				dev_info(dev,
 					"%s: received an invalid WRITEMEM_ACK buffer\n",
 					__func__);
-				dev_err(dev, "\tPrefix = 0x%X, expected 0x%X\n",
+				dev_info(dev, "\tPrefix = 0x%X, expected 0x%X\n",
 					ack->header.prefix, U3V_CONTROL_PREFIX);
-				dev_err(dev, "\tCmd = 0x%X, expected 0x%X or 0x%X\n",
+				dev_info(dev, "\tCmd = 0x%X, expected 0x%X or 0x%X\n",
 					ack->header.cmd, WRITEMEM_ACK,
 					PENDING_ACK);
-				dev_err(dev, "\tStatus = 0x%X, expected 0x%X\n",
+				dev_info(dev, "\tStatus = 0x%X, expected 0x%X\n",
 					ack->header.status, U3V_ERR_NO_ERROR);
-				dev_err(dev, "\tAck Id = 0x%X, expected 0x%X\n",
+				dev_info(dev, "\tAck Id = 0x%X, expected 0x%X\n",
 					ack->header.ack_id, ctrl->request_id);
 				if (ack->header.cmd == WRITEMEM_ACK) {
-					dev_err(dev, "\tPayload Length = %d, expected %zu\n",
+					dev_info(dev, "\tPayload Length = %d, expected %zu\n",
 						ack->header.length,
 						sizeof(
 						struct write_mem_ack_payload));
-					dev_err(dev, "\tBytes Written = %d, expected %d\n",
+					dev_info(dev, "\tBytes Written = %d, expected %d\n",
 						write_mem_ack->bytes_written,
 						bytes_this_iteration);
 				}
 				if (ack->header.cmd == PENDING_ACK) {
-					dev_err(dev, "\tPayload Length = %d, expected %zu\n",
+					dev_info(dev, "\tPayload Length = %d, expected %zu\n",
 						ack->header.length,
 						sizeof(
 						struct pending_ack_payload));
@@ -646,7 +646,7 @@ int u3v_write_memory(struct u3v_control *ctrl, u32 transfer_size,
 			 * the read request
 			 */
 			if (ack->header.cmd == PENDING_ACK) {
-				dev_dbg(dev, "%s: received pending ack, resubmitting\n",
+				dev_info(dev, "%s: received pending ack, resubmitting\n",
 					__func__);
 				pending_ack = (struct pending_ack_payload *)
 					(ack->payload);
@@ -664,7 +664,7 @@ int u3v_write_memory(struct u3v_control *ctrl, u32 transfer_size,
 	}
 
 	if (total_bytes_written != transfer_size)
-		dev_err(dev, "%s: wrote %d bytes, but expected %d",
+		dev_info(dev, "%s: wrote %d bytes, but expected %d",
 			__func__, total_bytes_written, transfer_size);
 
 exit:

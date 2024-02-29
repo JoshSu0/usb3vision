@@ -95,7 +95,7 @@ int u3v_create_events(struct u3v_device *u3v, struct usb_interface *intf,
 		return U3V_ERR_EVENTS_ALREADY_CONFIGURED;
 
 	if (u3v->event_info.bulk_in == NULL) {
-		dev_err(u3v->device,
+		dev_info(u3v->device,
 			"%s: Did not detect bulk in endpoint in the event interface.\n",
 		__func__);
 		return U3V_ERR_NO_EVENT_INTERFACE;
@@ -188,7 +188,7 @@ error:
 		kfree(entry);
 	}
 	unconfigure_events(event);
-	dev_err(event->u3v_dev->device,
+	dev_info(event->u3v_dev->device,
 	    "%s: Error allocating memory for event queue\n", __func__);
 	return -ENOMEM;
 }
@@ -269,7 +269,7 @@ int u3v_start_events(struct u3v_event *event)
 
 	ret = queue_urbs(event);
 	if (ret != 0) {
-		dev_err(event->u3v_dev->device,
+		dev_info(event->u3v_dev->device,
 			"%s: Error %d starting event queue\n", __func__, ret);
 	}
 
@@ -308,7 +308,7 @@ static int queue_urbs(struct u3v_event *event)
 
 
 	if (event->started) {
-		dev_err(event->u3v_dev->device,
+		dev_info(event->u3v_dev->device,
 			"%s: event already started\n", __func__);
 		return U3V_ERR_EVENTS_ALREADY_CONFIGURED;
 	}
@@ -362,7 +362,7 @@ static int queue_next_event(struct u3v_event *event)
 	    struct event_entry, list_elem);
 
 	if (entry->state == event_queued) {
-		dev_err(event->u3v_dev->device,
+		dev_info(event->u3v_dev->device,
 			"%s: Cannot queue an event that is already queued\n",
 			__func__);
 		ret =  U3V_ERR_EVENT_ALREADY_QUEUED;
@@ -408,7 +408,7 @@ static int submit_event_urb(struct u3v_event *event, struct event_entry *entry)
 	udev = event->u3v_dev->udev;
 
 	if (entry == NULL || entry->buffer == NULL || entry->purb == NULL) {
-		dev_err(dev, "%s: cannot have NULL entry, buffer, or URB\n",
+		dev_info(dev, "%s: cannot have NULL entry, buffer, or URB\n",
 			__func__);
 		return -EINVAL;
 	}
@@ -427,7 +427,7 @@ static int submit_event_urb(struct u3v_event *event, struct event_entry *entry)
 
 	if (ret != 0) {
 		usb_unanchor_urb(entry->purb);
-		dev_err(dev, "%s: Error %d submitting urb\n", __func__, ret);
+		dev_info(dev, "%s: Error %d submitting urb\n", __func__, ret);
 	}
 
 	return ret;
@@ -456,13 +456,13 @@ static void event_urb_completion(struct urb *purb)
 	    purb->status == -ECONNRESET ||
 	    purb->status == -ESHUTDOWN ||
 	    purb->status == -EPROTO)) {
-		dev_err(dev, "%s: Received nonzero urb completion status: %d",
+		dev_info(dev, "%s: Received nonzero urb completion status: %d",
 			__func__, purb->status);
 	}
 
 	entry = (struct event_entry *)(purb->context);
 	if (entry == NULL) {
-		dev_err(dev, "%s: Received a NULL context pointer\n",
+		dev_info(dev, "%s: Received a NULL context pointer\n",
 			__func__);
 		return;
 	}
@@ -500,12 +500,12 @@ int u3v_wait_for_event(struct u3v_event *event, void __user *u_buffer,
 	dev = event->u3v_dev->device;
 
 	if (u_buffer == NULL) {
-		dev_err(dev, "%s: u_buffer cannot be NULL\n", __func__);
+		dev_info(dev, "%s: u_buffer cannot be NULL\n", __func__);
 		return -EINVAL;
 	}
 
 	if (u_buffer_size == NULL) {
-		dev_err(dev, "%s: u_buffer_size cannot be NULL\n", __func__);
+		dev_info(dev, "%s: u_buffer_size cannot be NULL\n", __func__);
 		return -EINVAL;
 	}
 
@@ -513,7 +513,7 @@ int u3v_wait_for_event(struct u3v_event *event, void __user *u_buffer,
 
 	/* Ensure that the event interface has been started */
 	if (!event->started) {
-		dev_err(dev,
+		dev_info(dev,
 			"%s: Cannot call wait_for_event before starting event interface\n",
 			__func__);
 		ret = U3V_ERR_EVENTS_NOT_STARTED;
@@ -524,7 +524,7 @@ int u3v_wait_for_event(struct u3v_event *event, void __user *u_buffer,
 
 	/* Ensure that we are waiting on a queued event */
 	if (entry->state == event_idle) {
-		dev_err(dev, "%s: Requested to wait on an unqueued entry\n",
+		dev_info(dev, "%s: Requested to wait on an unqueued entry\n",
 			__func__);
 		ret = U3V_ERR_EVENTS_NOT_STARTED;
 		goto exit;
@@ -532,7 +532,7 @@ int u3v_wait_for_event(struct u3v_event *event, void __user *u_buffer,
 
 	/* Only one thread at a time can wait for an event */
 	if (event->wait_in_progress) {
-		dev_err(dev, "%s: Wait is already in progress\n", __func__);
+		dev_info(dev, "%s: Wait is already in progress\n", __func__);
 		ret = U3V_ERR_ALREADY_WAITING;
 		goto exit;
 	}
@@ -553,7 +553,7 @@ int u3v_wait_for_event(struct u3v_event *event, void __user *u_buffer,
 
 		/* check if we were interrupted by a signal */
 		if (ret != 0) {
-			dev_dbg(dev, "%s: wait interrupted by signal\n",
+			dev_info(dev, "%s: wait interrupted by signal\n",
 				__func__);
 			ret = U3V_ERR_EVENT_WAIT_CANCELED;
 			goto exit;
@@ -567,7 +567,7 @@ int u3v_wait_for_event(struct u3v_event *event, void __user *u_buffer,
 			entry->callback_status == -ESHUTDOWN ||
 			entry->callback_status == -EPROTO) {
 
-			dev_dbg(dev, "%s: Event interface was stopped\n",
+			dev_info(dev, "%s: Event interface was stopped\n",
 				__func__);
 			ret = U3V_ERR_EVENT_WAIT_CANCELED;
 			goto exit;
@@ -575,7 +575,7 @@ int u3v_wait_for_event(struct u3v_event *event, void __user *u_buffer,
 
 		/* Don't keep waiting if next event isn't queued */
 		if (entry->state == event_idle) {
-			dev_err(dev, "%s: Cannot wait on an unqueued entry\n",
+			dev_info(dev, "%s: Cannot wait on an unqueued entry\n",
 				__func__);
 			ret = U3V_ERR_EVENTS_NOT_STARTED;
 			goto exit;
@@ -626,15 +626,15 @@ static int transfer_event_data(struct u3v_event *event, void __user *u_buffer,
 	    (cmd->header.cmd != EVENT_CMD) ||
 	    (cmd->header.length > (entry->buffer_size - sizeof(*cmd)))) {
 
-		dev_err(dev, "%s: Received an invalid event_cmd buffer\n",
+		dev_info(dev, "%s: Received an invalid event_cmd buffer\n",
 			__func__);
-		dev_err(dev, "\tReceived Bytes = 0x%X (Expected <= 0x%X)\n",
+		dev_info(dev, "\tReceived Bytes = 0x%X (Expected <= 0x%X)\n",
 			entry->buffer_received_size, entry->buffer_size);
-		dev_err(dev, "\tPrefix = 0x%X (Expected 0x%X)\n",
+		dev_info(dev, "\tPrefix = 0x%X (Expected 0x%X)\n",
 			cmd->header.prefix, U3V_EVENT_PREFIX);
-		dev_err(dev, "\tCommand = 0x%X (Expected 0x%X)\n",
+		dev_info(dev, "\tCommand = 0x%X (Expected 0x%X)\n",
 			cmd->header.cmd, EVENT_CMD);
-		dev_err(dev, "\tPayload length = 0x%X (Expected 0x%X)\n",
+		dev_info(dev, "\tPayload length = 0x%X (Expected 0x%X)\n",
 			cmd->header.length,
 			(u32)(entry->buffer_size - sizeof(*cmd)));
 		ret = U3V_ERR_INVALID_DEVICE_RESPONSE;
@@ -650,7 +650,7 @@ static int transfer_event_data(struct u3v_event *event, void __user *u_buffer,
 	 * that failed to be copied
 	 */
 	if (ret != 0) {
-		dev_err(dev, "%s: Error copying to user buffer\n", __func__);
+		dev_info(dev, "%s: Error copying to user buffer\n", __func__);
 		buffer_size = buffer_size - ret;
 		ret = U3V_ERR_INTERNAL;
 		goto exit;
@@ -664,7 +664,7 @@ static int transfer_event_data(struct u3v_event *event, void __user *u_buffer,
 		ret = copy_to_user(u_event_complete_buffer, &ecd,
 			ecd.structure_size);
 		if (ret != 0) {
-			dev_err(dev, "%s: Error copying event data\n",
+			dev_info(dev, "%s: Error copying event data\n",
 				__func__);
 			ret = U3V_ERR_INTERNAL;
 			goto exit;
